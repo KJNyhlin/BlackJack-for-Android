@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">BlackJack</string>
+    <string name="app_title">Black Jack</string>
+    <string name="start_button_text">Play game</string>
+    <string name="stand_button_text">STAND</string>
+    <string name="hit_button_text">HIT</string>
+    <string name="cash_text">Cash: %1$d</string> /* not in use */
+    <string name="enter_name_prompt">Enter your name:</string>
+    <string name="enter_name_hint">Name</string>
+
+
+</resources>
