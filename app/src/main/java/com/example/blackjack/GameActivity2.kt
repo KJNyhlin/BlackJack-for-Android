@@ -1,34 +1,57 @@
 package com.example.blackjack
 
 import android.content.Context
+import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import kotlin.random.Random
+import android.view.View
+import android.view.View.*
 
 class GameActivity2 : AppCompatActivity() {
 
     private lateinit var standButton : Button
     private lateinit var hitButton: Button
+    private lateinit var playAgainButton: Button
+    private lateinit var endGameButton: Button
     private lateinit var cashTextView: TextView
     private lateinit var dealerTotalTextView: TextView
     private lateinit var playerTotalTextView: TextView
+    private lateinit var bustOrBlackjackText: TextView
+    private lateinit var whoWinsText: TextView
     private lateinit var players1stCardImage: ImageView
     private lateinit var players2ndCardImage: ImageView
     private lateinit var players3rdCardImage: ImageView
+    private lateinit var players4thCardImage: ImageView
+    private lateinit var players5thCardImage: ImageView
+    private lateinit var players6thCardImage: ImageView
+    private lateinit var players7thCardImage: ImageView
+    private lateinit var players8thCardImage: ImageView
+    private lateinit var players9thCardImage: ImageView
     private lateinit var dealers1stCardImage: ImageView
     private lateinit var dealers2ndCardImage: ImageView
-    private var cash = 100
+    private lateinit var dealers3rdCardImage: ImageView
+    private lateinit var dealers4thCardImage: ImageView
+    private lateinit var dealers5thCardImage: ImageView
+    private lateinit var dealers6thCardImage: ImageView
+    private lateinit var dealers7thCardImage: ImageView
+    private lateinit var mediaPlayer: MediaPlayer
+
+    private var cash = 210
     //private lateinit var playerName: String
     private var blackJack = false
     var specialBlackJack = false
     private val blackJackBonus = 10
-    private val specialBlackJackBonus = 20
+    private val specialBlackJackBonus = 10
     private var playerTotal = 0
     private var dealerTotal = 0
-    private var gameOver = false
+    private var playerWins = false
+    private var dealerWins = false
+    private var draw = false
 
     private var cardDeck = mutableListOf<Card>(
         Card(1, "clubs"),
@@ -100,29 +123,54 @@ class GameActivity2 : AppCompatActivity() {
 
         cashTextView = findViewById(R.id.cashTextView)
         cashTextView.text = "Cash: $cash"
+        bustOrBlackjackText = findViewById(R.id.bustOrBlackjackText)
+        whoWinsText = findViewById(R.id.whoWinsText)
         dealerTotalTextView = findViewById(R.id.dealerTotalTextView)
         playerTotalTextView = findViewById(R.id.playerTotalTextView)
         players1stCardImage = findViewById(R.id.players1stCardImage)
         players2ndCardImage = findViewById(R.id.players2ndCardImage)
         players3rdCardImage = findViewById(R.id.players3rdCardImage)
+        players4thCardImage = findViewById(R.id.players4thCardImage)
+        players5thCardImage = findViewById(R.id.players5thCardImage)
+        players6thCardImage = findViewById(R.id.players6thCardImage)
+        players7thCardImage = findViewById(R.id.players7thCardImage)
+        players8thCardImage = findViewById(R.id.players8thCardImage)
+        players9thCardImage = findViewById(R.id.players9thCardImage)
         dealers1stCardImage = findViewById(R.id.dealer1stCardImage)
         dealers2ndCardImage = findViewById(R.id.dealer2ndCardImage)
+        dealers3rdCardImage = findViewById(R.id.dealer3rdCardImage)
+        dealers4thCardImage = findViewById(R.id.dealer4thCardImage)
+        dealers5thCardImage = findViewById(R.id.dealer5thCardImage)
+        dealers6thCardImage = findViewById(R.id.dealer6thCardImage)
+        dealers7thCardImage = findViewById(R.id.dealer7thCardImage)
 
 
 
-
-        initializeGame()
-
-        //while (!gameOver) {
-        //    standButton.setOnClickListener {
-        //        stand()
-        //    }
-        //    hitButton.setOnClickListener {
-        //        dealCardToPlayer()
-        //    }
-        //}
+        playAgainButton = findViewById(R.id.playAgainButton)
 
 
+        endGameButton = findViewById(R.id.endGameButton)
+
+
+        mediaPlayer = MediaPlayer.create(this, R.raw.cardsound)
+
+
+        initializeRound()
+
+        standButton.setOnClickListener {
+            stand()
+        }
+        hitButton.setOnClickListener {
+            dealCardToPlayer()
+            playerTotal = calculateTotal(true)
+        }
+
+        playAgainButton.setOnClickListener {
+            initializeRound()
+        }
+        endGameButton.setOnClickListener {
+            finish()
+        }
 
 
 
@@ -131,8 +179,40 @@ class GameActivity2 : AppCompatActivity() {
 
     }
 
-    private fun initializeGame() {
+    private fun calculateTotal(player: Boolean): Int {
+        var total = 0
+        if (player) {
+            for (card: Card in playersHand) {
+                total += calculateCardValue(card, total)
+            }
+        }
+        else {
+            for (card: Card in dealersHand) {
+                total += calculateCardValue(card, total)
+            }
+        }
+        return total
+    }
+
+    private fun initializeRound() {
+        playAgainButton.isEnabled = false
+        playAgainButton.makeInvisible()
+        endGameButton.isEnabled = false
+        endGameButton.makeInvisible()
+        standButton.isEnabled = true
+        hitButton.isEnabled = true
+        bustOrBlackjackText.text = ""
+        whoWinsText.text = ""
+        clearAllCards()
+        playersHand.clear()
+        dealersHand.clear()
+        dealerWins = false
+        playerWins = false
+        draw = false
+        playerTotal = 0
         cardDeck.addAll(usedCards) //TODO: Kontrollera att det här fungerar
+        cash -= 10
+        cashTextView.text = "Player: $cash"
         dealCardToPlayer()
         dealCardToPlayer()
         // deal 1st card to dealer and display back of hole card
@@ -143,26 +223,28 @@ class GameActivity2 : AppCompatActivity() {
         //visa totalen för både dealern och spelaren
         dealerTotal = calculateCardValue(dealers1stCard, 0)
         dealerTotalTextView.text = "Dealer: $dealerTotal" //TODO: Om jag får tid, använd res. string m placeholder
-        playerTotalTextView.text = "Player: $playerTotal" //TODO: Samma här
-
-        if (blackJack) {
-            stand()
-            cash += blackJackBonus
-            if (specialBlackJack) {
-                cash += specialBlackJackBonus
-            }
-            playerWins()
-        }
-
-
-
-
+        //playerTotalTextView.text = "Player: $playerTotal" //TODO: Samma här
     }
 
-    private fun playerWins() {
-        TODO("Not yet implemented")
-        gameOver = true
+    private fun clearAllCards() {
+        players1stCardImage.setImageDrawable(null)
+        players2ndCardImage.setImageDrawable(null)
+        players3rdCardImage.setImageDrawable(null)
+        players4thCardImage.setImageDrawable(null)
+        players5thCardImage.setImageDrawable(null)
+        players6thCardImage.setImageDrawable(null)
+        players7thCardImage.setImageDrawable(null)
+        players8thCardImage.setImageDrawable(null)
+        players9thCardImage.setImageDrawable(null)
+        dealers1stCardImage.setImageDrawable(null)
+        dealers2ndCardImage.setImageDrawable(null)
+        dealers3rdCardImage.setImageDrawable(null)
+        dealers4thCardImage.setImageDrawable(null)
+        dealers5thCardImage.setImageDrawable(null)
+        dealers6thCardImage.setImageDrawable(null)
+        dealers7thCardImage.setImageDrawable(null)
     }
+
 
     private fun calculateCardValue(card: Card, subTotal: Int): Int {
         if (card.cardValue == 1) {
@@ -183,29 +265,59 @@ class GameActivity2 : AppCompatActivity() {
 
     private fun dealCardToPlayer() {
         val card = drawCard()
-        playerTotal += calculateCardValue(card, playerTotal)
         playersHand.add(card)
+        playerTotal = calculateTotal(true)
+        playerTotalTextView.text = "Player: $playerTotal"
+
         when (playersHand.size) {
             1 -> players1stCardImage.setImageResource(getCardImage(card))
-            2 -> players2ndCardImage.setImageResource(getCardImage(card))
+            2 -> { players2ndCardImage.setImageResource(getCardImage(card))
+            checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
+            if (specialBlackJack) {
+                playerWins = true
+                cash += specialBlackJackBonus
+                cashTextView.text = "Player: $cash"
+                // TODO play sound (fanfare etc)
+                finishRound()
+                return
+            }
+            else if (blackJack) {
+                stand()
+                return
+            }
+            }
             3 -> players3rdCardImage.setImageResource(getCardImage(card))
+            // when more than 3, move 1st card to 4th ImageView etc
+            4 -> {
+                players1stCardImage.setImageDrawable(null)
+                players2ndCardImage.setImageDrawable(null)
+                players3rdCardImage.setImageDrawable(null)
+                players4thCardImage.setImageResource(getCardImage(playersHand[0]))
+                players5thCardImage.setImageResource(getCardImage(playersHand[1]))
+                players6thCardImage.setImageResource(getCardImage(playersHand[2]))
+                players7thCardImage.setImageResource(getCardImage(playersHand[3]))
+            }
+            5 -> players8thCardImage.setImageResource(getCardImage(playersHand[4]))
+            6 -> {
+                players9thCardImage.setImageResource(getCardImage(playersHand[5]))
+                stand() // ends round, as maximum six cards are allowed for player
+            }
         }
-        //TODO: bugcheck temporarily commented out:
-        //checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
         if (checkForBust(playerTotal)) {
-            dealerWins()
+            dealerWins = true
+            finishRound()
         }
-
+        if (playerTotal == 21) {
+            finishRound()
         }
-
-    private fun dealerWins() {
-        TODO("Not yet implemented")
-        gameOver = true
     }
+
 
     private fun checkForBust(total: Int): Boolean {
         if (total > 21) {
-            //TODO: visa text "BUST" på något sätt
+            //TODO: spela något ljud
+            bustOrBlackjackText.text = "BUST"
+
             return true
         }
         return false
@@ -215,6 +327,7 @@ class GameActivity2 : AppCompatActivity() {
         if (total == 21) {
             if (handSize == 2) {
                 blackJack = true
+                bustOrBlackjackText.text = "BLACKJACK"
                 if (card1.cardValue == 1 && card1.suit == "spades") {
                     if (card2.cardValue == 11) {
                         if (card2.suit == "spades" || card2.suit == "clubs") {
@@ -311,12 +424,116 @@ class GameActivity2 : AppCompatActivity() {
         val card = cardDeck[randomIndex]
         cardDeck.removeAt(randomIndex)
         usedCards.add(card) //TODO: kontrollera att det här fungerar
+        if (!mediaPlayer.isPlaying) {
+            mediaPlayer.start()
+        }
         return card
     }
 
     private fun stand() {
-        //TODO: reveal dealer's 2nd card, check for BlackJack, if dealer has <17, takes another card
+        hitButton.isEnabled = false
+        standButton.isEnabled = false
+        dealerPlays()
+    }
+
+    private fun dealerPlays() {
+        //TODO: ev delay här
+        dealers2ndCardImage.setImageDrawable(null) //removes the "hole card" image
+        val card2 = drawCard()
+        dealersHand.add(card2)
+        dealers2ndCardImage.setImageResource(getCardImage(dealersHand[1]))
+        dealerTotal = calculateTotal(false)
+        dealerTotalTextView.text = "Dealer: $dealerTotal"
+        //TODO: ovanstående borde stämma
+        checkForBlackJack(dealerTotal, dealersHand.size, dealersHand[0], dealersHand[1])
+        if (blackJack) { // check if player also has blackjack:
+            checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
+            if (blackJack) {
+                draw = true
+            }
+        }
+        while (dealerTotal < 17 && dealersHand.size < 5) {
+            //TODO: ev delay här
+            val card = drawCard()
+            dealersHand.add(card)
+            dealerTotal = calculateTotal(false)
+            dealerTotalTextView.text = "Dealer: $dealerTotal"
+
+
+            when (dealersHand.size) {
+                3 -> {
+                    // when more than 2, move 1st card to 3rd ImageView etc
+                    dealers1stCardImage.setImageDrawable(null)
+                    dealers2ndCardImage.setImageDrawable(null)
+                    dealers3rdCardImage.setImageResource(getCardImage(dealersHand[0]))
+                    dealers4thCardImage.setImageResource(getCardImage(dealersHand[1]))
+                    dealers5thCardImage.setImageResource(getCardImage(dealersHand[2]))
+                }
+
+                4 -> dealers6thCardImage.setImageResource(getCardImage(dealersHand[3]))
+                5 -> {
+                    dealers7thCardImage.setImageResource(getCardImage(dealersHand[4]))
+                    finishRound() // ends round, as maximum five cards are allowed for dealer
+                    return
+                }
+            }
+            if (checkForBust(dealerTotal)) {
+                playerWins = true
+            }
+        }
+        finishRound()
+    }
+
+    private fun finishRound() {
+        //TODO: text med DEALER WINS eller YOU WIN.
+        hitButton.isEnabled = false
+        standButton.isEnabled = false
+        if (!dealerWins && !playerWins && !draw) {
+            if (playerTotal < 22 && playerTotal > dealerTotal) playerWins = true
+            else if (dealerTotal < 22 && playerTotal < dealerTotal) dealerWins = true
+            else if (playerTotal == dealerTotal) draw = true
+        }
+        if (dealerWins) {
+            whoWinsText.setTextColor(Color.parseColor("#FF0000"))
+            whoWinsText.text = "DEALER WINS"
+        }
+        else if (playerWins) {
+            whoWinsText.setTextColor(Color.parseColor("#800080"))
+            whoWinsText.text = "YOU WIN!"
+            cash += 20
+            if (blackJack) playerTotal += blackJackBonus
+            cashTextView.text = "Player: $cash"
+        }
+        else {
+            whoWinsText.text = "DRAW"
+            cash += 10
+            cashTextView.text = "Player: $cash"
+        }
+        playAgainButton.show()
+        playAgainButton.isEnabled = true
+        endGameButton.show()
+        endGameButton.isEnabled = true
+
+
     }
 
 
+
+
+    fun View.hide() {
+        this.visibility = GONE
+    }
+
+    private fun View.show() {
+        this.visibility = VISIBLE
+    }
+
+    private fun View.makeInvisible(){
+        this.visibility = INVISIBLE
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer.release() // Frigör resurserna använda av MediaPlayer
+    }
 }
