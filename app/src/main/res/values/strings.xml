@@ -7,6 +7,8 @@
     <string name="cash_text">Cash: %1$d</string> /* not in use */
     <string name="enter_name_prompt">Enter your name:</string>
     <string name="enter_name_hint">Name</string>
+    <string name="enter_name_button">Submit</string>
+
 
 
 </resources>
