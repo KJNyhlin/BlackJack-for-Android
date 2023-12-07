@@ -212,7 +212,7 @@ class GameActivity2 : AppCompatActivity() {
         playerTotal = 0
         cardDeck.addAll(usedCards) //TODO: Kontrollera att det här fungerar
         cash -= 10
-        cashTextView.text = "Player: $cash"
+        cashTextView.text = "Cash: $cash"
         dealCardToPlayer()
         dealCardToPlayer()
         // deal 1st card to dealer and display back of hole card
@@ -276,7 +276,7 @@ class GameActivity2 : AppCompatActivity() {
             if (specialBlackJack) {
                 playerWins = true
                 cash += specialBlackJackBonus
-                cashTextView.text = "Player: $cash"
+                cashTextView.text = "Cash: $cash"
                 // TODO play sound (fanfare etc)
                 finishRound()
                 return
@@ -305,6 +305,8 @@ class GameActivity2 : AppCompatActivity() {
         }
         if (checkForBust(playerTotal)) {
             dealerWins = true
+            //TODO: spela något ljud
+            bustOrBlackjackText.text = "BUST"
             finishRound()
         }
         if (playerTotal == 21) {
@@ -315,9 +317,6 @@ class GameActivity2 : AppCompatActivity() {
 
     private fun checkForBust(total: Int): Boolean {
         if (total > 21) {
-            //TODO: spela något ljud
-            bustOrBlackjackText.text = "BUST"
-
             return true
         }
         return false
@@ -502,12 +501,12 @@ class GameActivity2 : AppCompatActivity() {
             whoWinsText.text = "YOU WIN!"
             cash += 20
             if (blackJack) playerTotal += blackJackBonus
-            cashTextView.text = "Player: $cash"
+            cashTextView.text = "Cash: $cash"
         }
         else {
             whoWinsText.text = "DRAW"
             cash += 10
-            cashTextView.text = "Player: $cash"
+            cashTextView.text = "Cash: $cash"
         }
         playAgainButton.show()
         playAgainButton.isEnabled = true
