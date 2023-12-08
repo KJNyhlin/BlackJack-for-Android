@@ -1,7 +1,7 @@
 package com.example.blackjack
 
-import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Button
@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlin.random.Random
 import android.view.View
 import android.view.View.*
+import androidx.core.content.res.ResourcesCompat
 
 class GameActivity2 : AppCompatActivity() {
 
@@ -41,8 +42,6 @@ class GameActivity2 : AppCompatActivity() {
     private lateinit var dealers7thCardImage: ImageView
     private lateinit var cardSound: MediaPlayer
     private lateinit var playBustSound: MediaPlayer
-    private lateinit var blackJackSound: MediaPlayer
-    private lateinit var specialBlackJackSound: MediaPlayer
     private lateinit var winnerSound: MediaPlayer
 
     private var cash = 210
@@ -156,8 +155,6 @@ class GameActivity2 : AppCompatActivity() {
 
         cardSound = MediaPlayer.create(this, R.raw.cardsound)
         playBustSound = MediaPlayer.create(this, R.raw.bust_drum)
-        blackJackSound = MediaPlayer.create(this, R.raw.blackjacksound)
-        specialBlackJackSound = MediaPlayer.create(this, R.raw.specialblackjacksound)
         winnerSound = MediaPlayer.create(this, R.raw.ping)
 
 
@@ -219,12 +216,12 @@ class GameActivity2 : AppCompatActivity() {
         // deal 1st card to dealer and display back of hole card
         val dealers1stCard = drawCard()
         dealersHand.add(dealers1stCard)
-        dealers1stCardImage.setImageResource(getCardImage(dealers1stCard))
+        dealers1stCardImage.setImageDrawable(getCardImage(dealers1stCard))
         dealers2ndCardImage.setImageResource(R.drawable.backside)
         //visa totalen för både dealern och spelaren
         dealerTotal = calculateCardValue(dealers1stCard, 0)
         dealerTotalTextView.text =
-            "Dealer: $dealerTotal" //TODO: Om jag får tid, använd res. string m placeholder
+            "Dealer: $dealerTotal"
     }
 
     private fun clearAllCards() {
@@ -269,38 +266,45 @@ class GameActivity2 : AppCompatActivity() {
         playerTotalTextView.text = "Player: $playerTotal"
 
         when (playersHand.size) {
-            1 -> players1stCardImage.setImageResource(getCardImage(card))
+            1 -> players1stCardImage.setImageDrawable(getCardImage(card))
             2 -> {
-                players2ndCardImage.setImageResource(getCardImage(card))
-                checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
-                if (specialBlackJack) {
-                    playerWins = true
-                    cash += specialBlackJackBonus
-                    cashTextView.text = "Cash: $cash"
-                    //if (!specialBlackJackSound.isPlaying) {
-                    //    specialBlackJackSound.start()
-                    //}
-                    finishRound()
-                    return
-                } else if (blackJack) {
-                    //if (!blackJackSound.isPlaying) {
-                    //    blackJackSound.start()
-                    //}
+                players2ndCardImage.setImageDrawable(getCardImage(card))
+                if (playerTotal == 21) {
+                    bustOrBlackjackText.text = "BLACKJACK"
+                    blackJack = true
+                    val card1 = playersHand[0]
+                    val card2 = playersHand[1]
+                    // the following checks if the player has a "special blackjack"
+                    // which wins immediately
+                    if (card1.cardValue == 1 && card1.suit == "spades") {
+                        if (card2.cardValue == 11) {
+                            if (card2.suit == "spades" || card2.suit == "clubs") {
+                                playerWins = true
+                                cash += specialBlackJackBonus
+                            }
+                        }
+                    } else if (card2.cardValue == 1 && card2.suit == "spades") {
+                        if (card1.cardValue == 11) {
+                            if (card1.suit == "spades" || card1.suit == "clubs") {
+                                playerWins = true
+                                cash += specialBlackJackBonus
+                            }
+                        }
+                    }
                     stand()
-                    return
                 }
             }
 
-            3 -> players3rdCardImage.setImageResource(getCardImage(card))
+            3 -> players3rdCardImage.setImageDrawable(getCardImage(card))
             // when more than 3, move 1st card to 4th ImageView etc
             4 -> {
                 players1stCardImage.setImageDrawable(null)
                 players2ndCardImage.setImageDrawable(null)
                 players3rdCardImage.setImageDrawable(null)
-                players4thCardImage.setImageResource(getCardImage(playersHand[0]))
-                players5thCardImage.setImageResource(getCardImage(playersHand[1]))
-                players6thCardImage.setImageResource(getCardImage(playersHand[2]))
-                players7thCardImage.setImageResource(getCardImage(playersHand[3]))
+                players4thCardImage.setImageDrawable(getCardImage(playersHand[0]))
+                players5thCardImage.setImageDrawable(getCardImage(playersHand[1]))
+                players6thCardImage.setImageDrawable(getCardImage(playersHand[2]))
+                players7thCardImage.setImageDrawable(getCardImage(playersHand[3]))
                 players4thCardImage.elevation = 1.0F
                 players5thCardImage.elevation = 2.0F
                 players6thCardImage.elevation = 3.0F
@@ -308,12 +312,12 @@ class GameActivity2 : AppCompatActivity() {
             }
 
             5 -> {
-                players8thCardImage.setImageResource(getCardImage(playersHand[4]))
+                players8thCardImage.setImageDrawable(getCardImage(playersHand[4]))
                 players8thCardImage.elevation = 5.0F
             }
 
             6 -> {
-                players9thCardImage.setImageResource(getCardImage(playersHand[5]))
+                players9thCardImage.setImageDrawable(getCardImage(playersHand[5]))
                 players9thCardImage.elevation = 6.0F
                 stand() // ends round, as maximum six cards are allowed for player
             }
@@ -321,7 +325,7 @@ class GameActivity2 : AppCompatActivity() {
         if (checkForBust(playerTotal)) {
             dealerWins = true
             playBustSound = MediaPlayer.create(this, R.raw.bust_drum)
-            if (!playBustSound.isPlaying()) {
+            if (!playBustSound.isPlaying) {
                 playBustSound.start()
             }
             bustOrBlackjackText.text = "BUST"
@@ -340,103 +344,75 @@ class GameActivity2 : AppCompatActivity() {
         return false
     }
 
-    private fun checkForBlackJack(total: Int, handSize: Int, card1: Card, card2: Card) {
-        if (total == 21) {
-            if (handSize == 2) {
-                blackJack = true
-                bustOrBlackjackText.text = "BLACKJACK"
-                if (card1.cardValue == 1 && card1.suit == "spades") {
-                    if (card2.cardValue == 11) {
-                        if (card2.suit == "spades" || card2.suit == "clubs") {
-                            specialBlackJack = true
-                        }
-                    }
-                } else if (card2.cardValue == 1 && card2.suit == "spades") {
-                    if (card1.cardValue == 11) {
-                        if (card1.suit == "spades" || card1.suit == "clubs") {
-                            specialBlackJack = true
-                        }
-                    }
-                }
-            }
-
-        }
-    }
-
-    private fun getCardImage(card: Card): Int {
+    private fun getCardImage(card: Card): Drawable? {
         when (card.suit) {
             "clubs" -> when (card.cardValue) {
-                1 -> return getDrawableResourceId(this, "ace_clubs")
-                2 -> return getDrawableResourceId(this, "two_clubs")
-                3 -> return getDrawableResourceId(this, "three_clubs")
-                4 -> return getDrawableResourceId(this, "four_clubs")
-                5 -> return getDrawableResourceId(this, "five_clubs")
-                6 -> return getDrawableResourceId(this, "six_clubs")
-                7 -> return getDrawableResourceId(this, "seven_clubs")
-                8 -> return getDrawableResourceId(this, "eight_clubs")
-                9 -> return getDrawableResourceId(this, "nine_clubs")
-                10 -> return getDrawableResourceId(this, "ten_clubs")
-                11 -> return getDrawableResourceId(this, "jack_clubs")
-                12 -> return getDrawableResourceId(this, "queen_clubs")
-                13 -> return getDrawableResourceId(this, "king_clubs")
+                1 -> return ResourcesCompat.getDrawable(resources, R.drawable.ace_clubs, null)
+                2 -> return ResourcesCompat.getDrawable(resources, R.drawable.two_clubs, null)
+                3 -> return ResourcesCompat.getDrawable(resources, R.drawable.three_clubs, null)
+                4 -> return ResourcesCompat.getDrawable(resources, R.drawable.four_clubs, null)
+                5 -> return ResourcesCompat.getDrawable(resources, R.drawable.five_clubs, null)
+                6 -> return ResourcesCompat.getDrawable(resources, R.drawable.six_clubs, null)
+                7 -> return ResourcesCompat.getDrawable(resources, R.drawable.seven_clubs, null)
+                8 -> return ResourcesCompat.getDrawable(resources, R.drawable.eight_clubs, null)
+                9 -> return ResourcesCompat.getDrawable(resources, R.drawable.nine_clubs, null)
+                10 -> return ResourcesCompat.getDrawable(resources, R.drawable.ten_clubs, null)
+                11 -> return ResourcesCompat.getDrawable(resources, R.drawable.jack_clubs, null)
+                12 -> return ResourcesCompat.getDrawable(resources, R.drawable.queen_clubs, null)
+                13 -> return ResourcesCompat.getDrawable(resources, R.drawable.king_clubs, null)
             }
 
             "diamonds" -> when (card.cardValue) {
-                1 -> return getDrawableResourceId(this, "ace_diamonds")
-                2 -> return getDrawableResourceId(this, "two_diamonds")
-                3 -> return getDrawableResourceId(this, "three_diamonds")
-                4 -> return getDrawableResourceId(this, "four_diamonds")
-                5 -> return getDrawableResourceId(this, "five_diamonds")
-                6 -> return getDrawableResourceId(this, "six_diamonds")
-                7 -> return getDrawableResourceId(this, "seven_diamonds")
-                8 -> return getDrawableResourceId(this, "eight_diamonds")
-                9 -> return getDrawableResourceId(this, "nine_diamonds")
-                10 -> return getDrawableResourceId(this, "ten_diamonds")
-                11 -> return getDrawableResourceId(this, "jack_diamonds")
-                12 -> return getDrawableResourceId(this, "queen_diamonds")
-                13 -> return getDrawableResourceId(this, "king_diamonds")
+                1 -> return ResourcesCompat.getDrawable(resources, R.drawable.ace_diamonds, null)
+                2 -> return ResourcesCompat.getDrawable(resources, R.drawable.two_diamonds, null)
+                3 -> return ResourcesCompat.getDrawable(resources, R.drawable.three_diamonds, null)
+                4 -> return ResourcesCompat.getDrawable(resources, R.drawable.four_diamonds, null)
+                5 -> return ResourcesCompat.getDrawable(resources, R.drawable.five_diamonds, null)
+                6 -> return ResourcesCompat.getDrawable(resources, R.drawable.six_diamonds, null)
+                7 -> return ResourcesCompat.getDrawable(resources, R.drawable.seven_diamonds, null)
+                8 -> return ResourcesCompat.getDrawable(resources, R.drawable.eight_diamonds, null)
+                9 -> return ResourcesCompat.getDrawable(resources, R.drawable.nine_diamonds, null)
+                10 -> return ResourcesCompat.getDrawable(resources, R.drawable.ten_diamonds, null)
+                11 -> return ResourcesCompat.getDrawable(resources, R.drawable.jack_diamonds, null)
+                12 -> return ResourcesCompat.getDrawable(resources, R.drawable.queen_diamonds, null)
+                13 -> return ResourcesCompat.getDrawable(resources, R.drawable.king_diamonds, null)
             }
 
             "hearts" -> when (card.cardValue) {
-                1 -> return getDrawableResourceId(this, "ace_hearts")
-                2 -> return getDrawableResourceId(this, "two_hearts")
-                3 -> return getDrawableResourceId(this, "three_hearts")
-                4 -> return getDrawableResourceId(this, "four_hearts")
-                5 -> return getDrawableResourceId(this, "five_hearts")
-                6 -> return getDrawableResourceId(this, "six_hearts")
-                7 -> return getDrawableResourceId(this, "seven_hearts")
-                8 -> return getDrawableResourceId(this, "eight_hearts")
-                9 -> return getDrawableResourceId(this, "nine_hearts")
-                10 -> return getDrawableResourceId(this, "ten_hearts")
-                11 -> return getDrawableResourceId(this, "jack_hearts")
-                12 -> return getDrawableResourceId(this, "queen_hearts")
-                13 -> return getDrawableResourceId(this, "king_hearts")
+                1 -> return ResourcesCompat.getDrawable(resources, R.drawable.ace_hearts, null)
+                2 -> return ResourcesCompat.getDrawable(resources, R.drawable.two_hearts, null)
+                3 -> return ResourcesCompat.getDrawable(resources, R.drawable.three_hearts, null)
+                4 -> return ResourcesCompat.getDrawable(resources, R.drawable.four_hearts, null)
+                5 -> return ResourcesCompat.getDrawable(resources, R.drawable.five_hearts, null)
+                6 -> return ResourcesCompat.getDrawable(resources, R.drawable.six_hearts, null)
+                7 -> return ResourcesCompat.getDrawable(resources, R.drawable.seven_hearts, null)
+                8 -> return ResourcesCompat.getDrawable(resources, R.drawable.eight_hearts, null)
+                9 -> return ResourcesCompat.getDrawable(resources, R.drawable.nine_hearts, null)
+                10 -> return ResourcesCompat.getDrawable(resources, R.drawable.ten_hearts, null)
+                11 -> return ResourcesCompat.getDrawable(resources, R.drawable.jack_hearts, null)
+                12 -> return ResourcesCompat.getDrawable(resources, R.drawable.queen_hearts, null)
+                13 -> return ResourcesCompat.getDrawable(resources, R.drawable.king_hearts, null)
             }
 
             "spades" -> when (card.cardValue) {
-                1 -> return getDrawableResourceId(this, "ace_spades")
-                2 -> return getDrawableResourceId(this, "two_spades")
-                3 -> return getDrawableResourceId(this, "three_spades")
-                4 -> return getDrawableResourceId(this, "four_spades")
-                5 -> return getDrawableResourceId(this, "five_spades")
-                6 -> return getDrawableResourceId(this, "six_spades")
-                7 -> return getDrawableResourceId(this, "seven_spades")
-                8 -> return getDrawableResourceId(this, "eight_spades")
-                9 -> return getDrawableResourceId(this, "nine_spades")
-                10 -> return getDrawableResourceId(this, "ten_spades")
-                11 -> return getDrawableResourceId(this, "jack_spades")
-                12 -> return getDrawableResourceId(this, "queen_spades")
-                13 -> return getDrawableResourceId(this, "king_spades")
+                1 -> return ResourcesCompat.getDrawable(resources, R.drawable.ace_spades, null)
+                2 -> return ResourcesCompat.getDrawable(resources, R.drawable.two_spades, null)
+                3 -> return ResourcesCompat.getDrawable(resources, R.drawable.three_spades, null)
+                4 -> return ResourcesCompat.getDrawable(resources, R.drawable.four_spades, null)
+                5 -> return ResourcesCompat.getDrawable(resources, R.drawable.five_spades, null)
+                6 -> return ResourcesCompat.getDrawable(resources, R.drawable.six_spades, null)
+                7 -> return ResourcesCompat.getDrawable(resources, R.drawable.seven_spades, null)
+                8 -> return ResourcesCompat.getDrawable(resources, R.drawable.eight_spades, null)
+                9 -> return ResourcesCompat.getDrawable(resources, R.drawable.nine_spades, null)
+                10 -> return ResourcesCompat.getDrawable(resources, R.drawable.ten_spades, null)
+                11 -> return ResourcesCompat.getDrawable(resources, R.drawable.jack_spades, null)
+                12 -> return ResourcesCompat.getDrawable(resources, R.drawable.queen_spades, null)
+                13 -> return ResourcesCompat.getDrawable(resources, R.drawable.king_spades, null)
             }
 
         }
-        return 0
+        return null
     }
-
-    private fun getDrawableResourceId(context: Context, drawableName: String): Int {
-        return context.resources.getIdentifier(drawableName, "drawable", context.packageName)
-    }
-
 
     private fun drawCard(): Card {
         val randomIndex: Int = Random.nextInt(cardDeck.size)
@@ -452,7 +428,7 @@ class GameActivity2 : AppCompatActivity() {
     private fun stand() {
         hitButton.isEnabled = false
         standButton.isEnabled = false
-        if (playerWins) { //if specialBlackjack, see dealCardToPlayer()
+        if (playerWins) { // ie if specialBlackjack, see dealCardToPlayer()
             finishRound()
         } else {
             dealerPlays()
@@ -463,16 +439,13 @@ class GameActivity2 : AppCompatActivity() {
         dealers2ndCardImage.setImageDrawable(null) //removes the "hole card" image
         val card2 = drawCard()
         dealersHand.add(card2)
-        dealers2ndCardImage.setImageResource(getCardImage(dealersHand[1]))
+        dealers2ndCardImage.setImageDrawable(getCardImage(dealersHand[1]))
         dealerTotal = calculateTotal(false)
         dealerTotalTextView.text = "Dealer: $dealerTotal"
-        checkForBlackJack(dealerTotal, dealersHand.size, dealersHand[0], dealersHand[1])
-        if (blackJack) { // check if player also has blackjack:
-            checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
-            if (blackJack) {
+        if (dealerTotal == 21) { // check if player also has blackjack:
+            if (playersHand.size == 2 && playerTotal == 21) {
                 draw = true
-            }
-            else {
+            } else {
                 dealerWins = true
             }
         }
@@ -482,15 +455,14 @@ class GameActivity2 : AppCompatActivity() {
             dealerTotal = calculateTotal(false)
             dealerTotalTextView.text = "Dealer: $dealerTotal"
 
-
             when (dealersHand.size) {
                 3 -> {
                     // when more than 2, move 1st card to 3rd ImageView etc
                     dealers1stCardImage.setImageDrawable(null)
                     dealers2ndCardImage.setImageDrawable(null)
-                    dealers3rdCardImage.setImageResource(getCardImage(dealersHand[0]))
-                    dealers4thCardImage.setImageResource(getCardImage(dealersHand[1]))
-                    dealers5thCardImage.setImageResource(getCardImage(dealersHand[2]))
+                    dealers3rdCardImage.setImageDrawable(getCardImage(dealersHand[0]))
+                    dealers4thCardImage.setImageDrawable(getCardImage(dealersHand[1]))
+                    dealers5thCardImage.setImageDrawable(getCardImage(dealersHand[2]))
                     dealers3rdCardImage.elevation = 1.0F
                     dealers4thCardImage.elevation = 2.0F
                     dealers5thCardImage.elevation = 3.0F
@@ -498,12 +470,12 @@ class GameActivity2 : AppCompatActivity() {
                 }
 
                 4 -> {
-                    dealers6thCardImage.setImageResource(getCardImage(dealersHand[3]))
+                    dealers6thCardImage.setImageDrawable(getCardImage(dealersHand[3]))
                     dealers6thCardImage.elevation = 4.0F
                 }
 
                 5 -> {
-                    dealers7thCardImage.setImageResource(getCardImage(dealersHand[4]))
+                    dealers7thCardImage.setImageDrawable(getCardImage(dealersHand[4]))
                     dealers6thCardImage.elevation = 5.0F
 
                 }
@@ -526,14 +498,20 @@ class GameActivity2 : AppCompatActivity() {
         if (dealerWins) {
             whoWinsText.setTextColor(Color.parseColor("#FF0000"))
             whoWinsText.text = "DEALER WINS"
+            if (blackJack) {
+                bustOrBlackjackText.text = "DEALER HAS BLACKJACK"
+            }
         } else if (playerWins) {
             whoWinsText.setTextColor(Color.parseColor("#800080"))
             whoWinsText.text = "YOU WIN!"
             cash += 20
-            if (!winnerSound.isPlaying && !specialBlackJackSound.isPlaying && !blackJackSound.isPlaying) {
+            if (!winnerSound.isPlaying) {
                 winnerSound.start()
             }
-            if (blackJack) playerTotal += blackJackBonus
+            if (blackJack) {
+                playerTotal += blackJackBonus
+                bustOrBlackjackText.text = "BLACKJACK!"
+            }
             cashTextView.text = "Cash: $cash"
         } else {
             whoWinsText.text = "DRAW"
@@ -558,10 +536,8 @@ class GameActivity2 : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        cardSound.release() // Frigör resurserna använda av MediaPlayer
+        cardSound.release()
         playBustSound.release()
-        blackJackSound.release()
-        specialBlackJackSound.release()
         winnerSound.release()
     }
 }
