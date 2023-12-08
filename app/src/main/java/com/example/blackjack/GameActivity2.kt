@@ -277,15 +277,15 @@ class GameActivity2 : AppCompatActivity() {
                     playerWins = true
                     cash += specialBlackJackBonus
                     cashTextView.text = "Cash: $cash"
-                    if (!specialBlackJackSound.isPlaying) {
-                        specialBlackJackSound.start()
-                    }
+                    //if (!specialBlackJackSound.isPlaying) {
+                    //    specialBlackJackSound.start()
+                    //}
                     finishRound()
                     return
                 } else if (blackJack) {
-                    if (!blackJackSound.isPlaying) {
-                        blackJackSound.start()
-                    }
+                    //if (!blackJackSound.isPlaying) {
+                    //    blackJackSound.start()
+                    //}
                     stand()
                     return
                 }
@@ -320,7 +320,6 @@ class GameActivity2 : AppCompatActivity() {
         }
         if (checkForBust(playerTotal)) {
             dealerWins = true
-            //TODO: spela något ljud
             playBustSound = MediaPlayer.create(this, R.raw.bust_drum)
             if (!playBustSound.isPlaying()) {
                 playBustSound.start()
@@ -453,7 +452,11 @@ class GameActivity2 : AppCompatActivity() {
     private fun stand() {
         hitButton.isEnabled = false
         standButton.isEnabled = false
-        dealerPlays()
+        if (playerWins) { //if specialBlackjack, see dealCardToPlayer()
+            finishRound()
+        } else {
+            dealerPlays()
+        }
     }
 
     private fun dealerPlays() {
@@ -473,7 +476,7 @@ class GameActivity2 : AppCompatActivity() {
                 dealerWins = true
             }
         }
-        while (dealerTotal < 17 && dealersHand.size < 5) {
+        while (dealerTotal < 17 && dealerTotal <= playerTotal && dealersHand.size < 5) {
             val card = drawCard()
             dealersHand.add(card)
             dealerTotal = calculateTotal(false)
@@ -545,21 +548,12 @@ class GameActivity2 : AppCompatActivity() {
 
     }
 
-
-    fun View.hide() {
-        this.visibility = GONE
-    }
-
     private fun View.show() {
         this.visibility = VISIBLE
     }
 
     private fun View.makeInvisible() {
         this.visibility = INVISIBLE
-    }
-
-    private fun View.setElevation(z: Float) {
-        this.elevation = z
     }
 
     override fun onDestroy() {
