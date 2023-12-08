@@ -11,19 +11,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:backgroundTint="#21DA6C"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="-32dp">
+        tools:layout_editor_absoluteX="-55dp"
+        tools:layout_editor_absoluteY="-236dp">
 
         <Button
             android:id="@+id/endGameButton"
             style="@style/Widget.AppCompat.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:layout_marginEnd="70dp"
+            android:layout_marginBottom="40dp"
             android:text="@string/end_game_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/whoWinsText" />
+            app:layout_constraintBottom_toTopOf="@+id/players8thCardImage"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
             android:id="@+id/playAgainButton"
@@ -31,10 +31,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="70dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginBottom="40dp"
             android:text="@string/play_again_button"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/whoWinsText" />
+            app:layout_constraintBottom_toTopOf="@+id/players4thCardImage"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <ImageView
             android:id="@+id/dealer4thCardImage"
@@ -50,7 +50,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="40dp"
-            android:layout_marginTop="100dp"
+            android:layout_marginTop="96dp"
             app:layout_constraintStart_toStartOf="@+id/dealer6thCardImage"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -68,7 +68,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="40dp"
-            android:layout_marginTop="100dp"
+            android:layout_marginTop="104dp"
             app:layout_constraintStart_toStartOf="@+id/dealer4thCardImage"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -77,7 +77,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="88dp"
-            android:layout_marginTop="100dp"
+            android:layout_marginTop="96dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -86,7 +86,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="35dp"
-            android:layout_marginBottom="196dp"
+            android:layout_marginBottom="207dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/players8thCardImage" />
 
@@ -95,7 +95,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="35dp"
-            android:layout_marginBottom="196dp"
+            android:layout_marginBottom="203dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/players7thCardImage" />
 
@@ -104,7 +104,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="35dp"
-            android:layout_marginBottom="196dp"
+            android:layout_marginBottom="199dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/players6thCardImage" />
 
@@ -113,7 +113,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="35dp"
-            android:layout_marginBottom="200dp"
+            android:layout_marginBottom="195dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/players1stCardImage" />
 
@@ -227,7 +227,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="35dp"
-            android:layout_marginBottom="200dp"
+            android:layout_marginBottom="203dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/players1stCardImage" />
 
@@ -236,7 +236,7 @@
             android:layout_width="75dp"
             android:layout_height="98dp"
             android:layout_marginStart="35dp"
-            android:layout_marginBottom="200dp"
+            android:layout_marginBottom="199dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/players4thCardImage" />
 

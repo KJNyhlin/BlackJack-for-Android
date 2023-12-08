@@ -14,7 +14,7 @@ import android.view.View.*
 
 class GameActivity2 : AppCompatActivity() {
 
-    private lateinit var standButton : Button
+    private lateinit var standButton: Button
     private lateinit var hitButton: Button
     private lateinit var playAgainButton: Button
     private lateinit var endGameButton: Button
@@ -39,12 +39,16 @@ class GameActivity2 : AppCompatActivity() {
     private lateinit var dealers5thCardImage: ImageView
     private lateinit var dealers6thCardImage: ImageView
     private lateinit var dealers7thCardImage: ImageView
-    private lateinit var mediaPlayer: MediaPlayer
+    private lateinit var cardSound: MediaPlayer
+    private lateinit var playBustSound: MediaPlayer
+    private lateinit var blackJackSound: MediaPlayer
+    private lateinit var specialBlackJackSound: MediaPlayer
+    private lateinit var winnerSound: MediaPlayer
 
     private var cash = 210
-    //private lateinit var playerName: String
+
     private var blackJack = false
-    var specialBlackJack = false
+    private var specialBlackJack = false
     private val blackJackBonus = 10
     private val specialBlackJackBonus = 10
     private var playerTotal = 0
@@ -106,7 +110,7 @@ class GameActivity2 : AppCompatActivity() {
         Card(11, "spades"),
         Card(12, "spades"),
         Card(13, "spades")
-        )
+    )
     private var usedCards = mutableListOf<Card>()
     private var playersHand = mutableListOf<Card>()
     private var dealersHand = mutableListOf<Card>()
@@ -114,8 +118,6 @@ class GameActivity2 : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game2)
-
-        //playerName = intent.getStringExtra("playerName")!!
 
         standButton = findViewById(R.id.standButton)
         hitButton = findViewById(R.id.hitButton)
@@ -152,7 +154,11 @@ class GameActivity2 : AppCompatActivity() {
         endGameButton = findViewById(R.id.endGameButton)
 
 
-        mediaPlayer = MediaPlayer.create(this, R.raw.cardsound)
+        cardSound = MediaPlayer.create(this, R.raw.cardsound)
+        playBustSound = MediaPlayer.create(this, R.raw.bust_drum)
+        blackJackSound = MediaPlayer.create(this, R.raw.blackjacksound)
+        specialBlackJackSound = MediaPlayer.create(this, R.raw.specialblackjacksound)
+        winnerSound = MediaPlayer.create(this, R.raw.ping)
 
 
         initializeRound()
@@ -173,10 +179,6 @@ class GameActivity2 : AppCompatActivity() {
         }
 
 
-
-
-
-
     }
 
     private fun calculateTotal(player: Boolean): Int {
@@ -185,8 +187,7 @@ class GameActivity2 : AppCompatActivity() {
             for (card: Card in playersHand) {
                 total += calculateCardValue(card, total)
             }
-        }
-        else {
+        } else {
             for (card: Card in dealersHand) {
                 total += calculateCardValue(card, total)
             }
@@ -210,7 +211,7 @@ class GameActivity2 : AppCompatActivity() {
         playerWins = false
         draw = false
         playerTotal = 0
-        cardDeck.addAll(usedCards) //TODO: Kontrollera att det här fungerar
+        cardDeck.addAll(usedCards)
         cash -= 10
         cashTextView.text = "Cash: $cash"
         dealCardToPlayer()
@@ -222,8 +223,8 @@ class GameActivity2 : AppCompatActivity() {
         dealers2ndCardImage.setImageResource(R.drawable.backside)
         //visa totalen för både dealern och spelaren
         dealerTotal = calculateCardValue(dealers1stCard, 0)
-        dealerTotalTextView.text = "Dealer: $dealerTotal" //TODO: Om jag får tid, använd res. string m placeholder
-        //playerTotalTextView.text = "Player: $playerTotal" //TODO: Samma här
+        dealerTotalTextView.text =
+            "Dealer: $dealerTotal" //TODO: Om jag får tid, använd res. string m placeholder
     }
 
     private fun clearAllCards() {
@@ -253,11 +254,9 @@ class GameActivity2 : AppCompatActivity() {
             } else {
                 return 11
             }
-        }
-        else if (card.cardValue > 10) {
+        } else if (card.cardValue > 10) {
             return 10
-        }
-        else {
+        } else {
             return card.cardValue
         }
 
@@ -271,21 +270,27 @@ class GameActivity2 : AppCompatActivity() {
 
         when (playersHand.size) {
             1 -> players1stCardImage.setImageResource(getCardImage(card))
-            2 -> { players2ndCardImage.setImageResource(getCardImage(card))
-            checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
-            if (specialBlackJack) {
-                playerWins = true
-                cash += specialBlackJackBonus
-                cashTextView.text = "Cash: $cash"
-                // TODO play sound (fanfare etc)
-                finishRound()
-                return
+            2 -> {
+                players2ndCardImage.setImageResource(getCardImage(card))
+                checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
+                if (specialBlackJack) {
+                    playerWins = true
+                    cash += specialBlackJackBonus
+                    cashTextView.text = "Cash: $cash"
+                    if (!specialBlackJackSound.isPlaying) {
+                        specialBlackJackSound.start()
+                    }
+                    finishRound()
+                    return
+                } else if (blackJack) {
+                    if (!blackJackSound.isPlaying) {
+                        blackJackSound.start()
+                    }
+                    stand()
+                    return
+                }
             }
-            else if (blackJack) {
-                stand()
-                return
-            }
-            }
+
             3 -> players3rdCardImage.setImageResource(getCardImage(card))
             // when more than 3, move 1st card to 4th ImageView etc
             4 -> {
@@ -296,21 +301,35 @@ class GameActivity2 : AppCompatActivity() {
                 players5thCardImage.setImageResource(getCardImage(playersHand[1]))
                 players6thCardImage.setImageResource(getCardImage(playersHand[2]))
                 players7thCardImage.setImageResource(getCardImage(playersHand[3]))
+                players4thCardImage.elevation = 1.0F
+                players5thCardImage.elevation = 2.0F
+                players6thCardImage.elevation = 3.0F
+                players7thCardImage.elevation = 4.0F
             }
-            5 -> players8thCardImage.setImageResource(getCardImage(playersHand[4]))
+
+            5 -> {
+                players8thCardImage.setImageResource(getCardImage(playersHand[4]))
+                players8thCardImage.elevation = 5.0F
+            }
+
             6 -> {
                 players9thCardImage.setImageResource(getCardImage(playersHand[5]))
+                players9thCardImage.elevation = 6.0F
                 stand() // ends round, as maximum six cards are allowed for player
             }
         }
         if (checkForBust(playerTotal)) {
             dealerWins = true
             //TODO: spela något ljud
+            playBustSound = MediaPlayer.create(this, R.raw.bust_drum)
+            if (!playBustSound.isPlaying()) {
+                playBustSound.start()
+            }
             bustOrBlackjackText.text = "BUST"
             finishRound()
         }
         if (playerTotal == 21) {
-            finishRound()
+            stand()
         }
     }
 
@@ -333,8 +352,7 @@ class GameActivity2 : AppCompatActivity() {
                             specialBlackJack = true
                         }
                     }
-                }
-                else if (card2.cardValue == 1 && card2.suit == "spades") {
+                } else if (card2.cardValue == 1 && card2.suit == "spades") {
                     if (card1.cardValue == 11) {
                         if (card1.suit == "spades" || card1.suit == "clubs") {
                             specialBlackJack = true
@@ -343,8 +361,8 @@ class GameActivity2 : AppCompatActivity() {
                 }
             }
 
+        }
     }
-}
 
     private fun getCardImage(card: Card): Int {
         when (card.suit) {
@@ -363,6 +381,7 @@ class GameActivity2 : AppCompatActivity() {
                 12 -> return getDrawableResourceId(this, "queen_clubs")
                 13 -> return getDrawableResourceId(this, "king_clubs")
             }
+
             "diamonds" -> when (card.cardValue) {
                 1 -> return getDrawableResourceId(this, "ace_diamonds")
                 2 -> return getDrawableResourceId(this, "two_diamonds")
@@ -378,6 +397,7 @@ class GameActivity2 : AppCompatActivity() {
                 12 -> return getDrawableResourceId(this, "queen_diamonds")
                 13 -> return getDrawableResourceId(this, "king_diamonds")
             }
+
             "hearts" -> when (card.cardValue) {
                 1 -> return getDrawableResourceId(this, "ace_hearts")
                 2 -> return getDrawableResourceId(this, "two_hearts")
@@ -393,6 +413,7 @@ class GameActivity2 : AppCompatActivity() {
                 12 -> return getDrawableResourceId(this, "queen_hearts")
                 13 -> return getDrawableResourceId(this, "king_hearts")
             }
+
             "spades" -> when (card.cardValue) {
                 1 -> return getDrawableResourceId(this, "ace_spades")
                 2 -> return getDrawableResourceId(this, "two_spades")
@@ -412,19 +433,19 @@ class GameActivity2 : AppCompatActivity() {
         }
         return 0
     }
+
     private fun getDrawableResourceId(context: Context, drawableName: String): Int {
         return context.resources.getIdentifier(drawableName, "drawable", context.packageName)
     }
 
 
-
-    private fun drawCard() : Card {
+    private fun drawCard(): Card {
         val randomIndex: Int = Random.nextInt(cardDeck.size)
         val card = cardDeck[randomIndex]
         cardDeck.removeAt(randomIndex)
-        usedCards.add(card) //TODO: kontrollera att det här fungerar
-        if (!mediaPlayer.isPlaying) {
-            mediaPlayer.start()
+        usedCards.add(card)
+        if (!cardSound.isPlaying) {
+            cardSound.start()
         }
         return card
     }
@@ -436,23 +457,23 @@ class GameActivity2 : AppCompatActivity() {
     }
 
     private fun dealerPlays() {
-        //TODO: ev delay här
         dealers2ndCardImage.setImageDrawable(null) //removes the "hole card" image
         val card2 = drawCard()
         dealersHand.add(card2)
         dealers2ndCardImage.setImageResource(getCardImage(dealersHand[1]))
         dealerTotal = calculateTotal(false)
         dealerTotalTextView.text = "Dealer: $dealerTotal"
-        //TODO: ovanstående borde stämma
         checkForBlackJack(dealerTotal, dealersHand.size, dealersHand[0], dealersHand[1])
         if (blackJack) { // check if player also has blackjack:
             checkForBlackJack(playerTotal, playersHand.size, playersHand[0], playersHand[1])
             if (blackJack) {
                 draw = true
             }
+            else {
+                dealerWins = true
+            }
         }
         while (dealerTotal < 17 && dealersHand.size < 5) {
-            //TODO: ev delay här
             val card = drawCard()
             dealersHand.add(card)
             dealerTotal = calculateTotal(false)
@@ -467,13 +488,21 @@ class GameActivity2 : AppCompatActivity() {
                     dealers3rdCardImage.setImageResource(getCardImage(dealersHand[0]))
                     dealers4thCardImage.setImageResource(getCardImage(dealersHand[1]))
                     dealers5thCardImage.setImageResource(getCardImage(dealersHand[2]))
+                    dealers3rdCardImage.elevation = 1.0F
+                    dealers4thCardImage.elevation = 2.0F
+                    dealers5thCardImage.elevation = 3.0F
+
                 }
 
-                4 -> dealers6thCardImage.setImageResource(getCardImage(dealersHand[3]))
+                4 -> {
+                    dealers6thCardImage.setImageResource(getCardImage(dealersHand[3]))
+                    dealers6thCardImage.elevation = 4.0F
+                }
+
                 5 -> {
                     dealers7thCardImage.setImageResource(getCardImage(dealersHand[4]))
-                    finishRound() // ends round, as maximum five cards are allowed for dealer
-                    return
+                    dealers6thCardImage.elevation = 5.0F
+
                 }
             }
             if (checkForBust(dealerTotal)) {
@@ -484,7 +513,6 @@ class GameActivity2 : AppCompatActivity() {
     }
 
     private fun finishRound() {
-        //TODO: text med DEALER WINS eller YOU WIN.
         hitButton.isEnabled = false
         standButton.isEnabled = false
         if (!dealerWins && !playerWins && !draw) {
@@ -495,15 +523,16 @@ class GameActivity2 : AppCompatActivity() {
         if (dealerWins) {
             whoWinsText.setTextColor(Color.parseColor("#FF0000"))
             whoWinsText.text = "DEALER WINS"
-        }
-        else if (playerWins) {
+        } else if (playerWins) {
             whoWinsText.setTextColor(Color.parseColor("#800080"))
             whoWinsText.text = "YOU WIN!"
             cash += 20
+            if (!winnerSound.isPlaying && !specialBlackJackSound.isPlaying && !blackJackSound.isPlaying) {
+                winnerSound.start()
+            }
             if (blackJack) playerTotal += blackJackBonus
             cashTextView.text = "Cash: $cash"
-        }
-        else {
+        } else {
             whoWinsText.text = "DRAW"
             cash += 10
             cashTextView.text = "Cash: $cash"
@@ -517,8 +546,6 @@ class GameActivity2 : AppCompatActivity() {
     }
 
 
-
-
     fun View.hide() {
         this.visibility = GONE
     }
@@ -527,12 +554,20 @@ class GameActivity2 : AppCompatActivity() {
         this.visibility = VISIBLE
     }
 
-    private fun View.makeInvisible(){
+    private fun View.makeInvisible() {
         this.visibility = INVISIBLE
+    }
+
+    private fun View.setElevation(z: Float) {
+        this.elevation = z
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayer.release() // Frigör resurserna använda av MediaPlayer
+        cardSound.release() // Frigör resurserna använda av MediaPlayer
+        playBustSound.release()
+        blackJackSound.release()
+        specialBlackJackSound.release()
+        winnerSound.release()
     }
 }
